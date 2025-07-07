@@ -20,14 +20,25 @@ for lib in "$APP_ROOT"/lib/*.sh; do
 done
 
 # Загрузка плагинов
-for plugin in "$APP_ROOT"/plugins/*_plugin.sh; do
-    source "$plugin"
-done
+load_plugins() {
+    for plugin in "$APP_ROOT"/plugins/*_plugin.sh; do
+        source "$plugin"
+        register_plugin
+        
+        # Добавляем команды в список доступных
+        for scan_type in "${PLUGIN_SCAN_TYPES[@]}"; do
+            AVAILABLE_SCAN_TYPES+=("$scan_type")
+        done
+        
+        log "Загружен плагин: $PLUGIN_NAME"
+    done
+}
 
 # Инициализация
 init_logging "$LOG_FILE"
 check_dependencies
 load_config
+load_plugins
 
 # Запуск
 header "Запуск CyberScan v$VERSION"
