@@ -20,3 +20,9 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+
+load_default_config() {
+    source "$APP_ROOT/config/default.conf"
+    echo -e "${GREEN}Настройки сброшены к значениям по умолчанию${NC}"
+    sleep 1
+}

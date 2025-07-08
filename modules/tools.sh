@@ -31,3 +31,20 @@ load_config() {
         log "Загружена пользовательская конфигурация"
     fi
 }
+
+auto_detect_network() {
+    local interface=$(ip route | awk '/default/ {print $5}' | head -n 1)
+    if [ -z "$interface" ]; then
+        error "Не удалось определить сетевой интерфейс"
+        return 1
+    fi
+    
+    local ip_info=$(ip -o -f inet addr show "$interface" | awk '{print $4}')
+    local ip=$(echo "$ip_info" | cut -d'/' -f1)
+    local mask=$(echo "$ip_info" | cut -d'/' -f2)
+    
+    TARGET="${ip%.*}.0/$mask"
+    log "Автоопределение сети: $TARGET"
+    echo -e "${GREEN}✓ Определена сеть: $TARGET${NC}"
+    return 0
+}

@@ -25,3 +25,12 @@ header() {
     echo -e "${YELLOW} $1 ${NC}"
     echo -e "${YELLOW}=============================================${NC}"
 }
+
+validate_ip() {
+    local ip=$1
+    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
