@@ -25,12 +25,47 @@ load_plugins() {
         source "$plugin"
         register_plugin
         
-        # Добавляем команды в список доступных
-        for scan_type in "${PLUGIN_SCAN_TYPES[@]}"; do
-            AVAILABLE_SCAN_TYPES+=("$scan_type")
+        # Проверяем доступность инструментов для плагина
+        local plugin_available=true
+        case $PLUGIN_COMMAND in
+            nmap) [[ ${TOOLS[nmap]} -eq 0 ]] && plugin_available=false ;;
+            netcat) [[ ${TOOLS[nc]} -eq 0 ]] && plugin_available=false ;;
+            hping) [[ ${TOOLS[hping3]} -eq 0 ]] && plugin_available=false ;;
+        esac
+        
+        if $plugin_available; then
+            # Добавляем команды в список доступных
+            for scan_type in "${PLUGIN_SCAN_TYPES[@]}"; do
+                AVAILABLE_SCAN_TYPES+=("$scan_type")
+            done
+            log "Загружен плагин: $PLUGIN_NAME"
+        else
+            log "Плагин $PLUGIN_NAME отключен (недоступны инструменты)" "WARNING"
+            echo -e "${YELLOW}[!] Плагин $PLUGIN_NAME недоступен. Установите $PLUGIN_COMMAND.${NC}" >&2
+        fi
+    done
+}
+
+create_menu() {
+    local options=("$@")
+    SELECTED=0
+    
+    while [[ $SELECTED -lt 1 || $SELECTED -gt ${#options[@]} ]]; do
+        for i in "${!options[@]}"; do
+            local option="${options[$i]}"
+            local prefix=" "
+            
+            # Проверяем доступность функции
+            if [[ "$option" == "Запустить сканирование" ]] && [ ${#AVAILABLE_SCAN_TYPES[@]} -eq 0 ]; then
+                prefix="${RED}✘${NC} "
+            elif [[ "$option" == "Управление результатами" ]] && [ ${TOOLS[gpg]} -eq 0 ]; then
+                prefix="${RED}✘${NC} "
+            fi
+            
+            printf "%d. %s%s\n" "$((i+1))" "$prefix" "$option"
         done
         
-        log "Загружен плагин: $PLUGIN_NAME"
+        read -p "Выберите опцию [1-${#options[@]}]: " SELECTED
     done
 }
 
