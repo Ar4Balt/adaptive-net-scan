@@ -1,3 +1,11 @@
+#!/bin/bash
+
+# Версия ПО
+show_version() {
+    echo -e "${YELLOW}ADAPTIVE-NET-SCAN v$VERSION${NC}"
+    echo "Последнее обновление: 2025-07-08"
+}
+
 # Конфигурация
 VERSION="4.1"
 LOG_FILE="$APP_ROOT/output/scan.log"

@@ -107,11 +107,22 @@ scan_params_menu() {
         clear
         header "НАСТРОЙКА ПАРАМЕТРОВ СКАНИРОВАНИЯ"
         
+        # Доступные типы сканирования с описанием
+        local scan_types=(
+            "stealth|Скрытное сканирование (SYN)"
+            "full|Полное сканирование (TCP Connect)"
+            "udp|UDP сканирование"
+            "quick|Быстрое сканирование (топ портов)"
+            "os|Определение ОС"
+            "service|Определение версий сервисов"
+            "vuln|Проверка на уязвимости"
+            "discovery|Только обнаружение хостов"
+        )
+        
+        # Формируем список для меню
         menu_options=(
             "Тип сканирования: $SCAN_TYPE"
             "Порты: ${PORTS:-по умолчанию}"
-            "Определение ОС: ${OS_DETECT:--}"
-            "Определение сервисов: ${SERVICE_DETECT:--}"
             "Назад"
         )
         
@@ -121,32 +132,38 @@ scan_params_menu() {
             1) 
                 clear
                 header "ВЫБОР ТИПА СКАНИРОВАНИЯ"
-                echo "Доступные типы:"
-                for type in "${AVAILABLE_SCAN_TYPES[@]}"; do
-                    echo " - $type"
+                
+                echo -e "${YELLOW}Доступные типы сканирования:${NC}"
+                for i in "${!scan_types[@]}"; do
+                    local type=${scan_types[$i]%%|*}
+                    local desc=${scan_types[$i]#*|}
+                    printf "%-10s - %s\n" "$type" "$desc"
                 done
-                read -p "Введите тип сканирования: " SCAN_TYPE
+                
+                while true; do
+                    read -p "Введите тип сканирования: " new_type
+                    
+                    # Проверяем корректность ввода
+                    valid=false
+                    for st in "${scan_types[@]}"; do
+                        if [ "${st%%|*}" == "$new_type" ]; then
+                            valid=true
+                            break
+                        fi
+                    done
+                    
+                    if $valid; then
+                        SCAN_TYPE="$new_type"
+                        break
+                    else
+                        error "Неверный тип сканирования. Попробуйте снова."
+                    fi
+                done
                 ;;
             2)
                 read -p "Введите порты (через запятую или диапазон): " PORTS
                 ;;
             3)
-                read -p "Включить определение ОС? [y/N] " choice
-                if [[ $choice =~ ^[Yy]$ ]]; then
-                    OS_DETECT="-O"
-                else
-                    OS_DETECT=""
-                fi
-                ;;
-            4)
-                read -p "Включить определение сервисов? [y/N] " choice
-                if [[ $choice =~ ^[Yy]$ ]]; then
-                    SERVICE_DETECT="-sV"
-                else
-                    SERVICE_DETECT=""
-                fi
-                ;;
-            5)
                 return
                 ;;
         esac

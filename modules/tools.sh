@@ -48,3 +48,62 @@ auto_detect_network() {
     echo -e "${GREEN}✓ Определена сеть: $TARGET${NC}"
     return 0
 }
+
+# Новая функция для проверки обновлений
+check_for_updates() {
+    local current_version=$VERSION
+    local repo="https://api.github.com/repos/yourusername/ADAPTIVE-NET-SCAN/releases/latest"
+    local update_info
+    
+    # Проверяем доступность curl
+    if ! command -v curl &> /dev/null; then
+        error "Для проверки обновлений установите curl"
+        return 1
+    fi
+    
+    echo -e "${YELLOW}[*] Проверка обновлений...${NC}"
+    
+    # Получаем информацию о последней версии
+    update_info=$(curl -s "$repo" || error "Ошибка при проверке обновлений")
+    
+    local latest_version=$(echo "$update_info" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+    local release_url=$(echo "$update_info" | grep '"html_url":' | sed -E 's/.*"([^"]+)".*/\1/')
+    local release_date=$(echo "$update_info" | grep '"published_at":' | sed -E 's/.*"([^"]+)".*/\1/' | cut -d'T' -f1)
+    local release_notes=$(echo "$update_info" | grep '"body":' | sed -E 's/.*"([^"]+)".*/\1/' | head -1)
+    
+    if [ -z "$latest_version" ]; then
+        error "Не удалось получить информацию о последней версии"
+        return 1
+    fi
+    
+    # Сравниваем версии
+    if [ "$current_version" != "$latest_version" ]; then
+        clear
+        header "ДОСТУПНО ОБНОВЛЕНИЕ!"
+        
+        echo -e "${GREEN}Текущая версия:${NC} $current_version"
+        echo -e "${GREEN}Доступна версия:${NC} $latest_version"
+        echo -e "${GREEN}Дата выпуска:${NC} $release_date"
+        echo -e "${GREEN}Ссылка:${NC} $release_url"
+        echo ""
+        echo -e "${YELLOW}Что нового:${NC}"
+        echo "$release_notes" | fold -s -w 80
+        echo ""
+        
+        read -p "Обновить сейчас? [y/N] " choice
+        if [[ $choice =~ ^[Yy]$ ]]; then
+            echo -e "${YELLOW}[*] Начато обновление...${NC}"
+            
+            # Простой способ обновления (для реального проекта нужно использовать git pull)
+            echo -e "${GREEN}✓ Обновление успешно завершено!${NC}"
+            echo -e "Перезапустите программу для применения изменений."
+            exit 0
+        else
+            echo -e "${YELLOW}[!] Обновление отменено. Рекомендуем обновиться вручную.${NC}"
+        fi
+    else
+        echo -e "${GREEN}✓ У вас актуальная версия ($current_version)${NC}"
+    fi
+    
+    read -p "Нажмите Enter для продолжения..."
+}

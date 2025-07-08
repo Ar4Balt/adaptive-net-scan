@@ -76,5 +76,11 @@ load_config
 load_plugins
 
 # Запуск
-header "Запуск CyberScan v$VERSION"
+header "Запуск CyberScan"
+show_version
+
+if [ "$1" != "--no-update-check" ]; then
+    check_for_updates
+fi
+
 main_menu
